@@ -16,6 +16,17 @@ library Consts {
     uint256 constant POINTS_PER_TURN_FOR_KING = 10;
     uint256 constant MAX_TURNS = 100;
 
+    // battle design specific
+    uint256 constant ARCHER_ATTACK = 20;
+    uint256 constant ARCHER_HEALTH = 5;
+    uint256 constant INFANTRY_ATTACK = 10;
+    uint256 constant INFANTRY_HEALTH = 10;
+    uint256 constant CAVALRY_ATTACK = 30;
+    uint256 constant CAVALRY_HEALTH = 20;
+    uint256 constant DISTANCE_TO_CASTLE = 100;
+    uint256 constant INFANTRY_SPEED = 10;
+    uint256 constant CAVALRY_SPEED = 50;
+
     // SKALE specific
     uint256 constant SFUEL_DISTRIBUTION_AMOUNT = 0.00001 ether;
 }
