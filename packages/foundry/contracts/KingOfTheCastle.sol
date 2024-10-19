@@ -2,8 +2,13 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "./Consts.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract KingOfTheCastle {
+
+contract KingOfTheCastle is AccessControl {
+
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant WHITELIST_ROLE = keccak256("WHITELIST_ROLE");
 	
     struct Army {
         uint256 archers;
@@ -40,10 +45,13 @@ contract KingOfTheCastle {
     event AttackLaunched(address attacker, address defender, bool success);
     event DefenseChanged(address king, uint256 archers, uint256 infantry, uint256 cavalry);
     event TurnAdded(address player, uint256 newTurns);
+    event Whitelist(address to);
 
     constructor() {
         owner = msg.sender;
         lastTickTock = block.timestamp;
+        _grantRole(DEFAULT_ADMIN_ROLE, owner);
+        _grantRole(MANAGER_ROLE, owner);
         initializeGame();
     }
 
@@ -59,6 +67,7 @@ contract KingOfTheCastle {
 
     // Public functions for the game
 
+    // Only Whitelisted users can join the game, because they need to have some SFUEL to play the game
     function joinGame(string memory generalName) external {
         require(bytes(gameState.players[msg.sender].generalName).length == 0, "Player has already joined");
         gameState.players[msg.sender] = Player(
@@ -68,6 +77,10 @@ contract KingOfTheCastle {
             Consts.INITIAL_TURNS
         );
         playerAddresses.push(msg.sender);
+
+        // Remove the Whitelist role after the user has joined the game
+        // make sure they do not get SFUEL again
+        _revokeRole(WHITELIST_ROLE, msg.sender);
         emit PlayerJoined(msg.sender, generalName);
     }
 
@@ -149,10 +162,38 @@ contract KingOfTheCastle {
         return gameState.players[playerAddress];
     }
 
+    // To be Gasless, we whitelist users - to send them SFUEL, so that before they can play the game, they can get some SFUEL
+    function whitelist(address to) external onlyRole(MANAGER_ROLE) {
+        require(!hasRole(WHITELIST_ROLE, to), "AlreadyWhitelisted");
+
+        if(to.balance < 0.000005 ether){
+            require(address(this).balance >= Consts.SFUEL_DISTRIBUTION_AMOUNT, "ContractOutOfSFuel");
+            payable(to).transfer(Consts.SFUEL_DISTRIBUTION_AMOUNT);
+            emit Whitelist(to);
+        }
+        _grantRole(WHITELIST_ROLE, to);
+
+    }
 
     // Internal functions for the game
-    
-    function calculateBattleOutcome(Army memory attackingArmy, Army memory defendingArmy) private pure returns (bool) {
+    function getRandom() private view returns (bytes32 addr) {
+        assembly {
+            let freemem := mload(0x40)
+            let start_addr := add(freemem, 0)
+            if iszero(staticcall(gas(), 0x18, 0, 0, start_addr, 32)) {
+              invalid()
+            }
+            addr := mload(freemem)
+        }
+    }
+
+    // returns a random number between 1 and max
+    function getRandomNumber(uint256 max) private view returns (uint256) {
+        uint256 number =  uint256(getRandom()) % max;
+        return number == 0 ? 1 : number;
+    }
+
+    function calculateBattleOutcome(Army memory attackingArmy, Army memory defendingArmy) private view returns (bool) {
         // Stage 1: Cavalry vs Cavalry
         uint256 attackingCavalryRemaining = attackingArmy.cavalry;
         uint256 defendingCavalryRemaining = defendingArmy.cavalry;
@@ -229,12 +270,15 @@ contract KingOfTheCastle {
         return attackingHealth > 0 ? attackingHealth / Consts.CAVALRY_HEALTH : defendingHealth / Consts.CAVALRY_HEALTH;
     }
 
-    function archerVolley(uint256 archers, uint256 targetInfantry) private pure returns (uint256) {
+    function archerVolley(uint256 archers, uint256 targetInfantry) private view returns (uint256) {
         uint256 infantryHealth = targetInfantry * Consts.INFANTRY_HEALTH;
         uint256 volleys = Consts.DISTANCE_TO_CASTLE / Consts.INFANTRY_SPEED;
 
         for (uint i = 0; i < volleys; i++) {
-            uint256 damage = archers * Consts.ARCHER_ATTACK;
+            // adding randomness to the archer attack
+            // archers have a upto 5% chance of hitting
+            uint256 random_damage_factor  = getRandomNumber(6); 
+            uint256 damage = archers * Consts.ARCHER_ATTACK * random_damage_factor/100;
             if (damage >= infantryHealth) {
                 return 0; // All infantry killed
             }
@@ -244,16 +288,20 @@ contract KingOfTheCastle {
         return infantryHealth / Consts.INFANTRY_HEALTH; // Return remaining infantry
     }
 
-    function infantryBattle(uint256 attackingInfantry, uint256 defendingInfantry) private pure returns (uint256, uint256) {
+    function infantryBattle(uint256 attackingInfantry, uint256 defendingInfantry) private view returns (uint256, uint256) {
         uint256 attackingHealth = attackingInfantry * Consts.INFANTRY_HEALTH;
         uint256 defendingHealth = defendingInfantry * Consts.INFANTRY_HEALTH;
-        
-        while (attackingHealth > 0 && defendingHealth > 0) {
-            defendingHealth -= attackingInfantry * Consts.INFANTRY_ATTACK;
-            if (defendingHealth > 0) {
-                attackingHealth -= defendingInfantry * Consts.INFANTRY_ATTACK;
-            }
-        }
+
+        uint256 attackingAttack = attackingInfantry * Consts.INFANTRY_ATTACK;
+        uint256 defendingAttack = defendingInfantry * Consts.INFANTRY_ATTACK;
+
+        // adding randomness to the attack
+        // not all attacks are lethal, upto 20% attack can hit, rest are blocked by shields
+        uint256 attacker_effective_attack = getRandomNumber(attackingAttack/20);
+        uint256 defender_effective_attack = getRandomNumber(defendingAttack/20);
+
+        attackingHealth -= defender_effective_attack;
+        defendingHealth -= attacker_effective_attack;
 
         return (
             attackingHealth > 0 ? attackingHealth / Consts.INFANTRY_HEALTH : 0,
