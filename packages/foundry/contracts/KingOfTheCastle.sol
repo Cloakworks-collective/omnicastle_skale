@@ -309,31 +309,43 @@ contract KingOfTheCastle is AccessControl {
         );
     }
 
-    function cavalryCleanup(uint256 cavalry, uint256 archers, uint256 infantry) private pure returns (uint256, uint256) {
+    function cavalryCleanup(uint256 cavalry, uint256 archers, uint256 infantry) private view returns (uint256, uint256) {
         uint256 cavalryHealth = cavalry * Consts.CAVALRY_HEALTH;
         uint256 archerHealth = archers * Consts.ARCHER_HEALTH;
         uint256 infantryHealth = infantry * Consts.INFANTRY_HEALTH;
 
+        // While loop to simulate cavalry attacking archers first, then infantry
+        // not possible in a non performant chain
         while (cavalryHealth > 0 && (archerHealth > 0 || infantryHealth > 0)) {
+
+            // add randomness to the attack
+            // cavalry can hit upto 30% of the time
+            uint256 random_cavalry_damage_factor  = getRandomNumber(31);
+            // archers have a upto 5% chance of hitting cavalry
+            uint256 random_archer_damage_factor  = getRandomNumber(6);
+            // infantry have a upto 30% chance of hitting cavalry
+            uint256 random_infantry_damage_factor  = getRandomNumber(31);
+
             // Cavalry attacks archers first
-            uint256 cavalryDamage = (cavalry * Consts.CAVALRY_ATTACK);
+            uint256 effCavalryDamage = (cavalry * Consts.CAVALRY_ATTACK * random_cavalry_damage_factor)/100;
             if (archerHealth > 0) {
-                if (cavalryDamage >= archerHealth) {
-                    cavalryDamage -= archerHealth;
+                if (effCavalryDamage >= archerHealth) {
+                    effCavalryDamage -= archerHealth;
                     archerHealth = 0;
                     // Remaining damage goes to infantry
-                    infantryHealth = infantryHealth > cavalryDamage ? infantryHealth - cavalryDamage : 0;
+                    infantryHealth = infantryHealth > effCavalryDamage ? infantryHealth - effCavalryDamage : 0;
                 } else {
-                    archerHealth -= cavalryDamage;
+                    archerHealth -= effCavalryDamage;
                 }
             } else {
                 // If no archers left, attack infantry
-                infantryHealth = infantryHealth > cavalryDamage ? infantryHealth - cavalryDamage : 0;
+                infantryHealth = infantryHealth > effCavalryDamage ? infantryHealth - effCavalryDamage : 0;
             }
 
             // Archers and infantry counterattack
-            uint256 counterDamage = ((archerHealth / Consts.ARCHER_HEALTH) * Consts.ARCHER_ATTACK) +
-                                    ((infantryHealth / Consts.INFANTRY_HEALTH) * Consts.INFANTRY_ATTACK);
+            uint256 effArcherDamage = (archers * Consts.ARCHER_ATTACK * random_archer_damage_factor)/100;
+            uint256 effInfantryDamage = (infantry * Consts.INFANTRY_ATTACK * random_infantry_damage_factor)/100;
+            uint256 counterDamage = effArcherDamage + effInfantryDamage;
             cavalryHealth = cavalryHealth > counterDamage ? cavalryHealth - counterDamage : 0;
 
             // Update troop numbers
