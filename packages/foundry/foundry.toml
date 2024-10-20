@@ -26,7 +26,7 @@ scrollSepolia = "https://sepolia-rpc.scroll.io"
 scroll = "https://rpc.scroll.io"
 pgn = "https://rpc.publicgoods.network"
 pgnTestnet = "https://sepolia.publicgoods.network"
-nebulaTestnet = "https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet"
+skaleNebulaTestnet = "https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet"
 
 [etherscan]
 polygonMumbai = { key = "${ETHERSCAN_API_KEY}" }
