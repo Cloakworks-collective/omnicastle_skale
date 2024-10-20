@@ -104,3 +104,8 @@ The contract uses randomness in battle outcomes, including cavalry battles, arch
 - **Whitelist Role**: Allows new players to join the game.
 
 This contract represents the core game mechanics of **Omni Castles**, where strategic army management and attacking at the right time are crucial to becoming and staying the king.
+
+## Test Coverage
+
+We have partial test coverage of the contract 
+![alt text](image.png)
