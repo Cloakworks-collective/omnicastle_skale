@@ -1,7 +1,25 @@
+# Overall Project - OmniCastles
+
+Omni Castles is a game where players must conquer and hold multiple castles across different blockchains. To be crowned Emperor, a player must control at least 70% (Math.ceil(0.7 * number_of_castles)) of all castles. Each castle is built on a unique blockchain, utilizing its strengths to offer diverse gameplay experiences, requiring different strategies to conquer.
+
+Skale Castle: This castle requires a massive army due to Skale's ability to handle large computations. Battles are complex and leverage Skale's built-in, gasless randomness. Skale’s scalability makes large-scale battles possible without gas costs.
+
+Fhenix Castle: Utilizing Fully Homomorphic Encryption (FHE), this castle hides the defending army, forcing attackers to guess its composition based on previous battles. Acurast Oracle integrates real-time weather data, which affects battle outcomes.
+
+AirDAO Castle: Built on a scalable blockchain with high transactions per second (TPS), battles are more resource-intensive than on Fhenix, though not as demanding as on Skale.
+
+Rootstock Castle: Closely tied to the price of Bitcoin, the defending army's morale is affected by Bitcoin’s market performance, adding an economic twist to battles.
+
+Here are the relevant Github repos: 
+Skale Castle - https://github.com/Cloakworks-collective/omnicastle_skale
+Fhenix Castle - https://github.com/Cloakworks-collective/omnicastle_fhenix
+AirDao Castle - https://github.com/Cloakworks-collective/omnicastle_airdao
+Weather Oracle - https://github.com/Cloakworks-collective/omnicastles_weather
+
+# Skale  Castle
+
 * **Deployed Contract** : 0x18975871ab7E57e0f26fdF429592238541051Fb0
 * **Network**: Nebula Testnet
-
-# Omni Castles Smart Contract Documentation
 
 ## Overview
 The **Omni Castles** smart contract is designed for a multiplayer game where players compete to capture and hold a castle in a King of the Hill scenario. The castle changes hands based on successful attacks, and players earn points for holding it. The game involves managing armies, deploying attacks, and strategically defending the castle.
