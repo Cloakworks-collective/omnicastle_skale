@@ -1,5 +1,5 @@
-**Deployed Contract** : 0x18975871ab7E57e0f26fdF429592238541051Fb0
-**Network**: Nebula Testnet
+* **Deployed Contract** : 0x18975871ab7E57e0f26fdF429592238541051Fb0
+* **Network**: Nebula Testnet
 
 # Omni Castles Smart Contract Documentation
 
